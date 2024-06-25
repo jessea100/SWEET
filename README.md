@@ -1,2 +1,2 @@
 # SWEET
-Support groups Wellness education Eating habits Exercise routines Testing blood sugar
+**S**upport groups **W**ellness education **E**ating habits **E**xercise routines **T**esting blood sugar

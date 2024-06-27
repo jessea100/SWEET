@@ -8,8 +8,10 @@ What are the primary risk factors associated with the development of diabetes in
 
 ![IMG_6338](https://github.com/jessea100/SWEET/assets/172406481/ff87874d-d793-4d4b-86a9-4feb0fadac21)
 
+![837e902f-61a5-40b4-907c-615ec4d11298](https://github.com/jessea100/SWEET/assets/172406481/ae353919-8cac-4130-aa03-dbb3ba3dcc5d)
 
-**Figure 1. Schematic illustration of possible pathways through which environment impacts type 2 diabetes mellitus (T2DM) risk. Adapted from Poortinga [34], Northridge et al. [41], and Giles-Corti et al. [42]. I include walking, jogging and cycling infrastructure, open spaces, trails, etc.; II include supermarkets, shops, food outlets, recreational and other facilities, etc.; III include street connectivity, density, land use, sidewalks, walkable destinations, etc.; IV include housing condition, design, aesthetics, etc.; V smoking and drinking; VI high blood sugar levels below the range of T2DM diagnosis, also referred to as impaired glucose tolerance (IGT) or impaired fasting glucose (IFG).(Dendup et al.)**
+**Bar Chart illustrating the primary risk factors associated with the development of diabetes in a given population. 
+The chart highlights the percentage contribution of each risk factor.**
 
 ### Abstract: 
 Understanding the primary risk factors for diabetes is critical for a variety of reasons. Diabetes, particularly Type 2 diabetes, is a growing public health concern worldwide, affecting millions of people and putting a significant strain on healthcare systems. Identifying and understanding these risk factors enables healthcare providers, policymakers, and public health officials to develop targeted prevention strategies, implement early screening programs, and optimize treatment approaches to reduce diabetes incidence and impact in populations. Furthermore, understanding these factors can lead to more personalized diabetes prevention and management strategies, potentially improving health outcomes and quality of life for those affected.

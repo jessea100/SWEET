@@ -6,8 +6,6 @@ What are the primary risk factors associated with the development of diabetes in
 
 ### Graph: 
 
-![IMG_6338](https://github.com/jessea100/SWEET/assets/172406481/ff87874d-d793-4d4b-86a9-4feb0fadac21)
-
 ![837e902f-61a5-40b4-907c-615ec4d11298](https://github.com/jessea100/SWEET/assets/172406481/ae353919-8cac-4130-aa03-dbb3ba3dcc5d)
 
 **Bar Chart illustrating the primary risk factors associated with the development of diabetes in a given population. 

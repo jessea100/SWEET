@@ -2,7 +2,7 @@
 **S**upport groups **W**ellness education **E**ating habits **E**xercise routines **T**esting blood sugar
 
 ### Research Question: 
-What are the primary risk factors associated with the development of diabetes in a given population?
+"What role do health indicators, along with population factors and health-related risk behaviors, play in determining the prevalence of diabetes?"
 
 ### Graph: 
 

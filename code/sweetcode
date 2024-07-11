@@ -1,1 +1,283 @@
+---
+title: "project"
+author: 'Jessea James: Salem College'
+date: "2024-06-24"
+output: pdf_document
+---
 
+---
+Project_Title: "SWEET" - "Support groups Wellness education Eating habits Exercise routines Testing blood sugar"
+
+Research_Question: "What role do health indicators and population factors, play in determining the prevalence of diabetes?"
+
+Content: "Diabetes is a common chronic disease in the United States, affecting millions of people each year and causing a significant financial burden on the economy. It impairs glucose regulation, resulting in a lower quality of life and life expectancy. Diabetes can lead to complications such as heart disease, vision loss, lower limb amputation, and kidney disease. Strategies such as weight loss, healthy eating, and medical treatment can help to mitigate its effects. As of 2018, 34.2 million Americans had diabetes, while 88 million had prediabetes. Ins summary, Diabetes very prevalent in the United States and the wider world, and its incidence varies according to age, education, income, location, and other social determinants."
+
+Context: "The Behavioral Risk Factor Surveillance System (BRFSS) is an annual health-related telephone survey conducted by the CDC. Every year, over 400,000 Americans participate in the survey, which asks about health-related risk behaviors, chronic health conditions, and the use of preventive services. It has been held annually since 1984. For this project, a csv of the dataset available on Kaggle in 2015 was used. This original dataset contains 441,455 responses and 330 features. These features are either questions directly posed to participants or calculated variables based on individual participant responses."
+
+Abstract: "Diabetes and prediabetes constitute significant public health challenges globally, impacting millions of individuals and posing substantial economic burdens. This project will explore the prevalence, risk factors, and implications of these conditions using data from the Behavioral Risk Factor Surveillance System (BRFSS), a comprehensive survey conducted annually by the CDC. Analyzing this dataset will investigate the socioeconomic, and health factors associated with non - diabetic and prediabetes patients in the United States. Findings underscore the critical roles of age, education, income, and ghealth factors in shaping prevalence rates and highlight the importance of lifestyle interventions and healthcare strategies in mitigating these conditions' impact on individuals and society. "
+---
+
+#Set Working Directory
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+#Set the root directory for notebook chunks to manage the working directory 
+knitr::opts_knit$set(root.dir = "~/Desktop/ENABLE Programming/PROJECT")
+```
+
+# Verify Directory
+
+```{r}
+getwd()
+```
+
+# Load packages
+```{r}
+# Load packages (package for cleaning process...)
+pacman::p_load(rio, here, janitor, lubridate, matchmaker, epikit, tidyverse)   
+```
+
+#Data Table
+```{r}
+# Using read_csv from readr (tidyverse)
+library(readr)
+data <- read_csv("diabetes_binary_health_indicators_BRFSS2015.csv")
+head(data)
+```
+
+#Cleaning Dataset
+```{r}
+# Clean the dataset
+data <- data %>%
+  clean_names() %>%
+  mutate_all(tolower) %>%
+  mutate_all(str_remove_all, " ")
+```
+
+#Label Categories for Variables
+
+-   Representing Age Range for Age Variable
+
+```{r}
+data$age[data$age == 1] <- "18 - 24"
+data$age[data$age == 2] <- "25 - 29"
+data$age[data$age == 3] <- "30 - 34"
+data$age[data$age == 4] <- "35 - 39"
+data$age[data$age == 5] <- "40 - 44"
+data$age[data$age == 6] <- "45 - 49"
+data$age[data$age == 7] <- "50 - 54"
+data$age[data$age == 8] <- "55 - 59"
+data$age[data$age == 9] <- "60 - 64"
+data$age[data$age == 10] <- "65 - 69"
+data$age[data$age == 11] <- "70 - 74"
+data$age[data$age == 12] <- "75 - 79"
+data$age[data$age == 13] <- "80 - 99"
+table(data$age)
+```
+
+-   Representing Income Range for Income Variable
+
+```{r}
+data$income[data$income == 1] <- "Less than $10, 000"
+data$income[data$income == 2] <- "$10,000 to less than $15,000"
+data$income[data$income == 3] <- "$15,000 to less than $20,000"
+data$income[data$income == 4] <- "$20,000 to less than $25,000"
+data$income[data$income == 5] <- "$25,000 to less than $35,000"
+data$income[data$income == 6] <- "$35,000 to less than $50,000"
+data$income[data$income == 7] <- "$50,000 to less than $75,000"
+data$income[data$income == 8] <- "$75,000 or more"
+table(data$income)
+```
+
+-   Representing Education Variables with Education Level
+
+```{r}
+data$education[data$education == 1] <- "Never attended school or only kindergarten"
+data$education[data$education == 2] <- "Grades 1 through 8 (Elementary)"
+data$education[data$education == 3] <- "Grades 9 through 11 (Some high school)"
+data$education[data$education == 4] <- "Grade 12 or GED (High school graduate)"
+data$education[data$education == 5] <- "College 1 year to 3 years (Some college or technical school)"
+data$education[data$education == 6] <- "College 4 years or more (College graduate)"
+data$education[data$education == 7] <- "Refused "
+table(data$education)
+```
+
+-   Represting General Health Variables
+
+```{r}
+data$gen_hlth[data$gen_hlth == 1] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 2] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 3] <- "Very good"
+data$gen_hlth[data$gen_hlth == 4] <- "Good"
+data$gen_hlth[data$gen_hlth == 5] <- "Fair"
+data$gen_hlth[data$gen_hlth == 6] <- "Poor"
+data$gen_hlth[data$gen_hlth == 7] <- "Don’t know/Not Sure"
+data$gen_hlth[data$gen_hlth == 8] <- "Refused "
+table(data$gen_hlth)
+```
+
+-   Remove Columns PhysHlth, MentHlth
+
+```{r}
+data <- data%>%
+  select(-c(phys_hlth,ment_hlth))
+head(data)
+```
+
+-   Representing Diabetes Variable
+
+```{r}
+data$diabetes_binary[data$diabetes_binary == 0] <- "No diabetes"
+data$diabetes_binary[data$diabetes_binary == 1] <- "Prediabetes"
+data$diabetes_binary[data$diabetes_binary == 2] <- "Diabetes"
+table(data$diabetes_binary)
+```
+
+-   Represting High Blood Pressure Variable
+
+```{r}
+data$high_bp[data$high_bp == 0] <- "No high BP"
+data$high_bp[data$high_bp == 1] <- "High BP"
+table(data$diabetes_binary)
+```
+
+-   Represting High Cholesterol Variable
+
+```{r}
+data$high_chol[data$high_chol == 0] <- "No high cholesterol"
+data$high_chol[data$high_chol == 1] <- "High cholesterol"
+table(data$high_chol)
+```
+
+-   Representing Values for High Cholesterol
+
+```{r}
+data$chol_check[data$chol_check == 0] <- "No cholesterol check in 5 years"
+data$chol_check[data$chol_check== 1] <- "Cholesterol check in 5 years"
+table(data$chol_check)
+```
+
+#Representing Survey Question Variables
+
+Variable Name: smoker Question: Have you smoked at least 100 cigarettes in your entire life? [Note: 5 packs = 100 cigarettes] Response: 0 = no 1 = yes
+
+```{r}
+data$smoker[data$smoker == 0] <- "No"
+data$smoker[data$smoker == 1] <- "Yes"
+table(data$smoker)
+```
+
+Variable Name: stroke Question: Have you ever had a stroke? Response: 0 = no 1 = yes
+
+```{r}
+data$stroke[data$stroke == 0] <- "No"
+data$stroke[data$stroke == 1] <- "Yes"
+table(data$stroke)
+```
+
+Variable Name: heartdiseaseorattack Question: Have you ever had a coronary heart disease (CHD) or myocardial infarction (MI)? Response: 0 = no 1 = yes
+
+```{r}
+data$heart_diseaseor_attack[data$heart_diseaseor_attack == 0] <- "No"
+data$heart_diseaseor_attack[data$heart_diseaseor_attack == 1] <- "Yes"
+table(data$heart_diseaseor_attack)
+```
+
+Variable Name: phys_activity Question: Have you done physical activity in past 30 days - not including job? Response: 0 = no 1 = yes
+
+```{r}
+data$phys_activity[data$phys_activity == 0] <- "No"
+data$phys_activity[data$phys_activity == 1] <- "Yes"
+table(data$phys_activity)
+```
+
+Variable Name: fruits Question: Have you consumed Fruit 1 or more times per day? Response: 0 = no 1 = yes
+
+```{r}
+data$fruits[data$fruits == 0] <- "No"
+data$fruits[data$fruits == 1] <- "Yes"
+table(data$fruits)
+```
+
+Variable Name: veggies Question: Have you consumed Vegetables 1 or more times per day? Response: 0 = no 1 = yes
+
+```{r}
+data$veggies[data$veggies == 0] <- "No"
+data$veggies[data$veggies == 1] <- "Yes"
+table(data$veggies)
+```
+
+Variable Name: hvy_alcohol_consump Question: Have you consumed heavy drinks (adult men having more than 14 drinks per week and adult women having more than 7 drinks per week)? Response: 0 = no 1 = yes
+
+```{r}
+data$hvy_alcohol_consump[data$hvy_alcohol_consump == 0] <- "No"
+data$hvy_alcohol_consump[data$hvy_alcohol_consump == 1] <- "Yes"
+table(data$hvy_alcohol_consump)
+```
+
+Variable Name: any_healthcare Question:Have any kind of health care coverage, including health insurance, prepaid plans such as HMO, etc.? Response: 0 = no 1 = yes
+
+```{r}
+data$any_healthcare[data$any_healthcare == 0] <- "No"
+data$any_healthcare[data$any_healthcare == 1] <- "Yes"
+table(data$hvy_alcohol_consump)
+```
+
+Variable Name: no_docbc_cost Question:Was there a time in the past 12 months when you needed to see a doctor but could not because of cost? Response: 0 = no 1 = yes
+
+```{r}
+data$no_docbc_cost[data$no_docbc_cost == 0] <- "No"
+data$no_docbc_cost[data$no_docbc_cost == 1] <- "Yes"
+table(data$no_docbc_cost)
+```
+
+Variable Name: diff_walk Question:Do you have serious difficulty walking or climbing stairs? Response: 0 = no 1 = yes
+
+```{r}
+data$diff_walk[data$diff_walk == 0] <- "No"
+data$diff_walk[data$diff_walk == 1] <- "Yes"
+table(data$diff_walk)
+```
+
+Variable Name: phys_activity Question:Are you Male or Female? Response: 0 = Female 1 = Male
+
+```{r}
+data$sex[data$sex == 0] <- "Female"
+data$sex[data$sex == 1] <- "Male"
+table(data$sex)
+```
+
+#Save file
+
+```{r}
+write_csv(data, "DIABETESDATA.CSV")
+```
+
+#Verification of Missing Variables
+
+```{r}
+# Check for missing values
+# Option 1: Check summary of missing values
+summary(is.na(data))
+
+# Option 2: Count missing values per column
+colSums(is.na(data))
+
+# Handle missing values: Example strategies
+
+# 1. Impute missing values (replace with mean or median)
+# Example: Impute numeric columns with median
+data_imputed <- data %>%
+  mutate_if(is.numeric, ~if_else(is.na(.), median(., na.rm = TRUE), .))
+
+# 2. Remove rows with any missing values
+data_complete <- na.omit(data)
+
+# 3. Remove columns with more than a certain threshold of missing values (e.g., 50%)
+data_filtered <- data %>%
+  select(which(colMeans(!is.na(.)) > 0.5))
+
+# Save cleaned data to a new file
+write_csv(data_complete, "cleaned_data.csv")
+head(data)
+```

@@ -7,9 +7,13 @@
 library(gtsummary)
 library(dplyr)
 library(readr)
+library(here)
+
+# here i_am() is a function that allows you to navigate to the project directory
+here::i_am("code/02_summary_stats.Rmd")
 
 # Read your data (adjust path and read function as per your file)
-data <- read_csv("/Users/jesseageorgia/Desktop/SWEET/PROJECT/DIABETESDATA.CSV")
+data <- readRDS(here("data/cleaned_data.RDS"))
 
 # Ensure 'diabetes_binary' is a factor or character column
 data$diabetes_binary <- factor(data$diabetes_binary)

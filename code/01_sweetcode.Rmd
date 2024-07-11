@@ -57,9 +57,19 @@ data <- data %>%
 -   Representing Age Range for Age Variable
 
 ```{r}
-data$age <- factor(data$age, 
-                   levels = 1:13, 
-                   labels = c("18 - 24", "25 - 29", "30 - 34", "35 - 39", "40 - 44", "45 - 49", "50 - 54", "55 - 59", "60 - 64", "65 - 69", "70 - 74", "75 - 79", "80 - 99"))
+data$age[data$age == 1] <- "18 - 24"
+data$age[data$age == 2] <- "25 - 29"
+data$age[data$age == 3] <- "30 - 34"
+data$age[data$age == 4] <- "35 - 39"
+data$age[data$age == 5] <- "40 - 44"
+data$age[data$age == 6] <- "45 - 49"
+data$age[data$age == 7] <- "50 - 54"
+data$age[data$age == 8] <- "55 - 59"
+data$age[data$age == 9] <- "60 - 64"
+data$age[data$age == 10] <- "65 - 69"
+data$age[data$age == 11] <- "70 - 74"
+data$age[data$age == 12] <- "75 - 79"
+data$age[data$age == 13] <- "80 - 99"
 table(data$age)
 ```
 

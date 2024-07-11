@@ -281,3 +281,32 @@ data_filtered <- data %>%
 write_csv(data_complete, "cleaned_data.csv")
 head(data)
 ```
+
+#Verification of Missing Variables
+
+```{r}
+# Check for missing values
+# Option 1: Check summary of missing values
+summary(is.na(data))
+
+# Option 2: Count missing values per column
+colSums(is.na(data))
+
+# Handle missing values: Example strategies
+
+# 1. Impute missing values (replace with mean or median)
+# Example: Impute numeric columns with median
+data_imputed <- data %>%
+  mutate_if(is.numeric, ~if_else(is.na(.), median(., na.rm = TRUE), .))
+
+# 2. Remove rows with any missing values
+data_complete <- na.omit(data)
+
+# 3. Remove columns with more than a certain threshold of missing values (e.g., 50%)
+data_filtered <- data %>%
+  select(which(colMeans(!is.na(.)) > 0.5))
+
+# Save cleaned data to a new file
+write_csv(data_complete, "cleaned_data.csv")
+head(data)
+```

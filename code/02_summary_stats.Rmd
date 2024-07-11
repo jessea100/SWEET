@@ -13,7 +13,7 @@ library(here)
 here::i_am("code/02_summary_stats.Rmd")
 
 # Read your data (adjust path and read function as per your file)
-data <- readRDS(here("data/cleaned_data.RDS"))
+data <- readRDS(here("data/cleaned_data/cleaned_data_complete.RDS"))
 
 # Ensure 'diabetes_binary' is a factor or character column
 data$diabetes_binary <- factor(data$diabetes_binary)

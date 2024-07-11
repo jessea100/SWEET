@@ -100,9 +100,19 @@ table(data$education)
 -   Represting General Health Variables
 
 ```{r}
+data$gen_hlth[data$gen_hlth == 1] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 2] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 3] <- "Very good"
+data$gen_hlth[data$gen_hlth == 4] <- "Good"
+data$gen_hlth[data$gen_hlth == 5] <- "Fair"
+data$gen_hlth[data$gen_hlth == 6] <- "Poor"
+data$gen_hlth[data$gen_hlth == 7] <- "Don’t know/Not Sure"
+data$gen_hlth[data$gen_hlth == 8] <- "Refused"
+
 data$gen_hlth <- factor(data$gen_hlth, 
-                        levels = 1:8, 
-                        labels = c("Excellent", "Excellent", "Very good", "Good", "Fair", "Poor", "Don’t know/Not Sure", "Refused"))
+                        levels = c("Excellent", "Very good", "Good", "Fair", "Poor", "Don’t know/Not Sure", "Refused"), 
+                        ordered = TRUE)
+
 table(data$gen_hlth)
 ```
 
@@ -227,7 +237,7 @@ table(data$sex)
 
 ```{r}
 ## I saved it as an RDS file so it retains all the formatting when you load it in the next time
-saveRDS(data, here("data/cleaned_data_basic.RDS"))
+saveRDS(data, here("data/cleaned_data/cleaned_data_basic.RDS"))
 ```
 
 #Verification of Missing Variables
@@ -248,14 +258,16 @@ data_imputed <- data %>%
   mutate_if(is.numeric, ~if_else(is.na(.), median(., na.rm = TRUE), .))
 
 # 2. Remove rows with any missing values
-data_complete <- na.omit(data)
+data_complete <- na.omit(data) 
+#### Note: You have atleast one NA in every row so it is removing everything here
 
 # 3. Remove columns with more than a certain threshold of missing values (e.g., 50%)
 data_filtered <- data %>%
   select(which(colMeans(!is.na(.)) > 0.5))
 
 # Save all datasets
-saveRDS(data_complete, here("data/cleaned_data_complete.RDS"))
-saveRDS(data_imputed, here("data/cleaned_data_imputed.RDS"))
-saveRDS(data_filtered, here("data/cleaned_data_filtered.RDS"))
+saveRDS(data_complete, here("data/cleaned_data/cleaned_data_complete.RDS"))
+saveRDS(data_imputed, here("data/cleaned_data/cleaned_data_imputed.RDS"))
+saveRDS(data_filtered, here("data/cleaned_data/cleaned_data_filtered.RDS"))
 
+```

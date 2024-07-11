@@ -1,7 +1,24 @@
 #Percentages of respondents with prediabetes across different age groups (e.g., 18-24, 25-34, 35-44, etc.).
 
 # Load required libraries
-library(dplyr)
+library(tidyverse) # Changed from dplyr
+library(here) # Added by Abhi
+library(gtsummary) # Added by Abhi
+
+# Here i am
+here::i_am("code/summarystats.R") # Added by Abhi
+
+# Read in cleaned data
+data <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS")) # Added by Abhi
+
+# Recode diabetes_binary to be 0 = No diabetes, and 1 = Diabetes
+data <- data %>%
+  mutate(diabetes_binary = factor(ifelse(diabetes_binary == "No diabetes", "No Diabetes", "Diabetes")))
+
+
+###############
+# JESSEA'S CODE
+###############
 
 # Assuming 'data' is your cleaned dataset with variables including 'age' and 'diabetes_binary'
 # Ensure 'age' is a character variable with appropriate age group labels
@@ -31,3 +48,63 @@ knitr::kable(prediabetes_percentages,
              digits = 1,               # Round percentages to one decimal place
              format.args = list(big.mark = ",", decimal.mark = ".", scientific = FALSE),  # Formatting for numbers
              col.widths = c("8em", "8em", "6em"))  # Adjust column widths
+
+##############
+# Abhi's code
+##############
+
+# Categorize BMI
+# I did this so that it did not give me one row per BMI value, which was silly in a table
+data <- data %>%
+  # Create a new column 'bmi_category' based on BMI values
+  mutate(bmi_category = case_when(
+    bmi < 18.5 ~ "Underweight",  # BMI less than 18.5 is categorized as Underweight
+    bmi >= 18.5 & bmi < 24.9 ~ "Normal weight",  # BMI between 18.5 and 24.9 is categorized as Normal weight
+    bmi >= 25 & bmi < 29.9 ~ "Overweight",  # BMI between 25 and 29.9 is categorized as Overweight
+    bmi >= 30 ~ "Obese"  # BMI 30 and above is categorized as Obese
+  ))
+
+# Create a Table 1 using gtsummary package
+table1 <- data %>%
+  # Select relevant columns for the summary table
+  select(
+    diabetes_binary, high_bp, high_chol, chol_check, bmi_category, smoker, stroke, heart_diseaseor_attack, 
+    phys_activity, fruits, veggies, hvy_alcohol_consump, any_healthcare, no_docbc_cost, 
+    gen_hlth, diff_walk, sex, age, education, income
+  ) %>%
+  # Generate summary statistics table grouped by diabetes status
+  tbl_summary(
+    by = diabetes_binary,  # Group by diabetes status
+    label = list(
+      diabetes_binary = "Diabetes Status",
+      high_bp = "High Blood Pressure",
+      high_chol = "High Cholesterol",
+      chol_check = "Cholesterol Check",
+      bmi_category = "BMI Category",
+      smoker = "Smoker",
+      stroke = "Stroke",
+      heart_diseaseor_attack = "Heart Disease or Attack",
+      phys_activity = "Physical Activity",
+      fruits = "Fruits Consumption",
+      veggies = "Vegetables Consumption",
+      hvy_alcohol_consump = "Heavy Alcohol Consumption",
+      any_healthcare = "Any Healthcare",
+      no_docbc_cost = "No Doctor Because of Cost",
+      gen_hlth = "General Health",
+      diff_walk = "Difficulty Walking",
+      sex = "Sex",
+      age = "Age",
+      education = "Education",
+      income = "Income"
+    ),
+    statistic = list(all_continuous() ~ "{mean} ({sd})", all_categorical() ~ "{n} ({p}%)"),  # Define statistics to display
+    missing = "no"  # Exclude missing values from the summary
+  ) %>%
+  # Modify the header of the table
+  modify_header(label = "**Variable**") %>%
+  add_overall() %>%
+  # Bold the labels in the table
+  bold_labels()
+
+# Print the table
+table1

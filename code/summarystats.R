@@ -65,6 +65,12 @@ data <- data %>%
   ))
 
 # Create a Table 1 using gtsummary package
+# This table should basically be the same as the one you made above, except it is able to have values for all the variables
+# While this table already looks nice, you can do much more to it, so explore the gtsummary package. 
+# Also, you may want to re-label the variables to be more informative, some of the binary variables (eg: Any access to 
+# healthcare, no doctor because of cost, etc.) are not informative in the context of this table, so it may be good to re-label them
+# Also, it looks like some rows have missing values, so you may want to exclude them from the table/filter them out.
+
 table1 <- data %>%
   # Select relevant columns for the summary table
   select(

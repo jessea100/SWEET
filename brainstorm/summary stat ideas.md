@@ -6,8 +6,8 @@
 - Median income and interquartile range (IQR) among respondents with different diabetes statuses.
 - Cross-tabulations showing diabetes prevalence by age group, income bracket, education level, etc.
 - Correlation coefficients between diabetes status and variables like smoking, physical activity, and fruit/vegetable consumption.
-- Counts and percentages of respondents with diabetes across different age groups (e.g., 18-24, 25-34, 35-44, etc.).
-- Mean age and standard deviation within each diabetes status category to understand the age distribution of diabetic respondents.
+
+  
 - Tabulate counts and percentages of diabetes prevalence by gender (male vs. female).
 - Calculate mean age and standard deviation separately for males and females with diabetes.
 - Create frequency tables showing the distribution of diabetes prevalence across income brackets (e.g., less than $25,000, $25,000-$50,000, etc.).

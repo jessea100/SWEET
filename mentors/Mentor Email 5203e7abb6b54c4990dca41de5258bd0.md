@@ -124,7 +124,7 @@ Subject: Request for Insight into Your Research and Career Path
 
 Dear Seyoun (Jess) Byun,
 
-I hope this email finds you well. My name is Jessea James, and I am currently a summer intern at UNC Chapel Hill with Carolina Health Informatics Program.. I recently came across your profile and was intrigued by your work as a PhD student.
+I hope this email finds you well. My name is Jessea James, and I am currently a summer intern at UNC Chapel Hill with Carolina Health Informatics Program. I recently came across your profile and was intrigued by your work as a PhD student.
 
 I am particularly interested in learning more about your research focus and career aspirations. Could we schedule a brief meeting or a phone call at your convenience? I would greatly appreciate the opportunity to hear about your experiences, research interests, and any insights you may have regarding pursuing a PhD and beyond.
 

@@ -1,0 +1,847 @@
+---
+title: "Sample"
+author: 'Jessea James: Salem College'
+date: "2024-07-23"
+output: html_document
+---
+
+---
+Title: "Project"
+Author: 'Jessea James: Salem College'
+Date: "2024-06-24"
+Output: pdf_document
+editor_options: 
+  markdown: 
+    wrap: 72
+---
+
+---
+Project_Title: "SWEET" - "Support groups Wellness education Eating habits Exercise routines Testing blood sugar"
+
+Research_Question: "What role do health indicators and population factors, play in determining the prevalence of diabetes?"
+
+Content: "Diabetes is a common chronic disease in the United States, affecting millions of people each year and causing a significant financial burden on the economy. It impairs glucose regulation, resulting in a lower quality of life and life expectancy. Diabetes can lead to complications such as heart disease, vision loss, lower limb amputation, and kidney disease. Strategies such as weight loss, healthy eating, and medical treatment can help to mitigate its effects. As of 2018, 34.2 million Americans had diabetes, while 88 million had prediabetes. Ins summary, Diabetes very prevalent in the United States and the wider world, and its incidence varies according to age, education, income, location, and other social determinants."
+
+Context: "The Behavioral Risk Factor Surveillance System (BRFSS) is an annual health-related telephone survey conducted by the CDC. Every year, over 400,000 Americans participate in the survey, which asks about health-related risk behaviors, chronic health conditions, and the use of preventive services. It has been held annually since 1984. For this project, a csv of the dataset available on Kaggle in 2015 was used. This original dataset contains 441,455 responses and 330 features. These features are either questions directly posed to participants or calculated variables based on individual participant responses."
+
+Abstract: "Diabetes and prediabetes constitute significant public health challenges globally, impacting millions of individuals and posing substantial economic burdens. This project will explore the prevalence, risk factors, and implications of these conditions using data from the Behavioral Risk Factor Surveillance System (BRFSS), a comprehensive survey conducted annually by the CDC. Analyzing this dataset will investigate the socioeconomic, and health factors associated with non - diabetic and prediabetic patients in the United States. Findings underscore the critical roles of age, education, income, and general health (ghealth) factors in shaping prevalence rates and highlight the importance of lifestyle interventions and healthcare strategies in mitigating these conditions' impact on individuals and society". 
+
+---
+
+#Set Working Directory 
+- This is the default location where R will look
+for files that will be loaded and where it will put any files you save.
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Load packages
+
+-   Packages are essential tools for data analysis and statistical
+    computing. They provide users with a wealth of resources that they
+    can use to perform complex analyses and visualizations with ease,and
+    they are easy to install and use.
+
+```{r}
+# Load packages (package for cleaning process...)
+pacman::p_load(rio, here, janitor, lubridate, matchmaker, epikit, tidyverse)
+
+# here i_am to point at where the whole folder sits
+here::i_am("code/01_sweetcode.Rmd")
+
+```
+
+#Data Table 
+- The code loads and previews the first few rows of a CSVfile containing health indicators data related to diabetes, using the
+`readr` and `here` packages in R for easier file path management.
+
+```{r}
+# Using read_csv from readr (tidyverse)
+# use the here command because it allows to locate the file in the folder using relative paths, to run the script without changing directories. Loading raw data, which is the original. 
+library(readr)
+data_raw <- read_csv(here("data/raw_data/diabetes_binary_health_indicators_BRFSS2015.csv"))
+
+head(data_raw)
+```
+
+#Cleaning Dataset 
+- The process to transform raw data into consistentdata that can be easily analyzed.
+
+-   clean_names(): This function from the janitor package cleans the
+    column names of the dataframe. It makes names lowercase, replaces
+    spaces and special characters with underscores, and ensures names
+    are unique.
+
+-   mutate_all(tolower): This function applies the tolower function to
+    all columns in the dataframe, converting all text to lowercase.
+
+-   mutate_all(str_remove_all, " "): This function uses the
+    str_remove_all function from the stringr package to remove all
+    spaces from the values in all columns.
+
+```{r}
+# Clean the dataset
+data <- data_raw %>%
+  clean_names() %>%
+  mutate_all(tolower) %>%
+  mutate_all(str_remove_all, " ")
+```
+
+#Label Categories for Variables
+
+-   Representing Age Range for Age Variable
+
+```{r}
+data$age[data$age == 1] <- "18 - 24"
+data$age[data$age == 2] <- "25 - 29"
+data$age[data$age == 3] <- "30 - 34"
+data$age[data$age == 4] <- "35 - 39"
+data$age[data$age == 5] <- "40 - 44"
+data$age[data$age == 6] <- "45 - 49"
+data$age[data$age == 7] <- "50 - 54"
+data$age[data$age == 8] <- "55 - 59"
+data$age[data$age == 9] <- "60 - 64"
+data$age[data$age == 10] <- "65 - 69"
+data$age[data$age == 11] <- "70 - 74"
+data$age[data$age == 12] <- "75 - 79"
+data$age[data$age == 13] <- "80 - 99"
+table(data$age)
+```
+
+-   Representing Income Range for Income Variable
+
+```{r}
+data$income <- factor(data$income, 
+                      levels = 1:8, 
+                      labels = c("Less than $10,000", "$10,000 to less than $15,000", 
+                                 "$15,000 to less than $20,000", 
+                                 "$20,000 to less than $25,000", 
+                                 "$25,000 to less than $35,000", 
+                                 "$35,000 to less than $50,000", 
+                                 "$50,000 to less than $75,000", 
+                                 "$75,000 or more"))
+table(data$income)
+```
+```{r}
+# Assuming 'data' is your dataframe and 'income' is a factor variable with levels 1 to 8 as described
+
+# Recode income into income_level based on specified groups
+data$income_level <- cut(as.numeric(data$income), 
+                         breaks = c(0, 2, 4, 6, 8),
+                         labels = c("Level 1", "Level 2", "Level 3", "Level 4"))
+
+# Convert income_level to factor with specified labels
+data$income_level <- factor(data$income_level,
+                            levels = c("Level 1", "Level 2", "Level 3", "Level 4"),
+                            labels = c("Level 1", "Level 2", "Level 3", "Level 4"))
+
+# Check the frequency table of the new income_level variable
+table(data$income_level)
+head(data)
+```
+- Cross Tabulation for Income Values and Income Level
+```{r}
+# Assuming 'data' is your dataframe with 'income' and 'income_level' variables
+
+# Create a contingency table
+cross_table <- table(data$income, data$income_level)
+
+# Display the cross-tabulation
+print(cross_table)
+```
+-   Representing Education Variables with Education Level
+
+```{r}
+data$education <- factor(data$education, 
+                         levels = 1:6, 
+                         labels = c("Never attended school or only kindergarten", 
+                                    "Grades 1 through 8 (Elementary)", 
+                                    "Grades 9 through 11 (Some high school)", 
+                                    "Grade 12 or GED (High school graduate)", 
+                                    "College 1 year to 3 years (Some college or technical school)", 
+                                    "College 4 years or more (College graduate)"))
+table(data$education)
+```
+
+-   Representing General Health Variables
+
+```{r}
+data$gen_hlth[data$gen_hlth == 1] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 2] <- "Excellent"
+data$gen_hlth[data$gen_hlth == 3] <- "Very good"
+data$gen_hlth[data$gen_hlth == 4] <- "Good"
+data$gen_hlth[data$gen_hlth == 5] <- "Fair"
+
+data$gen_hlth <- factor(data$gen_hlth, 
+                        levels = c("Excellent", "Very good", "Good", "Fair"), 
+                        ordered = TRUE)
+
+table(data$gen_hlth)
+```
+
+-   Remove Columns PhysHlth, MentHlth
+-   Columns PhysHlth, MentHlth were removed for a more homogeneous
+    analysis giving clear and definitive answers. Excluding these open
+    ended variables will help maintain consistency in data.
+
+```{r}
+library(dplyr)
+
+data <- data %>%
+  select(-phys_hlth, -ment_hlth)
+
+```
+
+-   Representing Diabetes Variable
+
+```{r}
+data$diabetes_binary <- factor(data$diabetes_binary, 
+                               levels = c(0, 1), 
+                               labels = c("No diabetes", "Prediabetes"))
+table(data$diabetes_binary)
+```
+
+-   Representing High Blood Pressure Variable
+
+```{r}
+data$high_bp <- factor(data$high_bp, levels = c(0, 1), labels = c("No high BP", "High BP"))
+table(data$high_bp)
+```
+
+-   Representing High Cholesterol Variable
+
+```{r}
+data$high_chol <- factor(data$high_chol, levels = c(0, 1), labels = c("No high cholesterol", "High cholesterol"))
+table(data$high_chol)
+```
+
+-   Representing Values for High CholesterolCheck in 5 years
+
+```{r}
+data$chol_check <- factor(data$chol_check, levels = c(0, 1), labels = c("No cholesterol check in 5 years", "Cholesterol check in 5 years"))
+table(data$chol_check)
+```
+
+#Representing Survey Variables
+
+Variable Name: smoker Question: Have you smoked at least 100 cigarettes
+in your entire life? [Note: 5 packs = 100 cigarettes] Response: 0 = no 1
+= yes
+
+```{r}
+data$smoker <- factor(data$smoker, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$smoker)
+```
+
+Variable Name: stroke Question: Have you ever had a stroke? Response: 0
+= no 1 = yes
+
+```{r}
+data$stroke <- factor(data$stroke, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$stroke)
+```
+
+Variable Name: heartdiseaseorattack Question: Have you ever had a
+coronary heart disease (CHD) or myocardial infarction (MI)? Response: 0
+= no 1 = yes
+
+```{r}
+data$heart_diseaseor_attack <- factor(data$heart_diseaseor_attack, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$heart_diseaseor_attack)
+```
+
+Variable Name: phys_activity Question: Have you done physical activity
+in past 30 days - not including job? Response: 0 = no 1 = yes
+
+```{r}
+data$phys_activity <- factor(data$phys_activity, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$phys_activity)
+```
+
+Variable Name: fruits Question: Have you consumed Fruit 1 or more times
+per day? Response: 0 = no 1 = yes
+
+```{r}
+data$fruits <- factor(data$fruits, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$fruits)
+```
+
+Variable Name: veggies Question: Have you consumed Vegetables 1 or more
+times per day? Response: 0 = no 1 = yes
+
+```{r}
+data$veggies <- factor(data$veggies, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$veggies)
+```
+
+Variable Name: hvy_alcohol_consump Question: Have you consumed heavy
+drinks (adult men having more than 14 drinks per week and adult women
+having more than 7 drinks per week)? Response: 0 = no 1 = yes
+
+```{r}
+data$hvy_alcohol_consump <- factor(data$hvy_alcohol_consump, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$hvy_alcohol_consump)
+```
+
+Variable Name: any_healthcare Question:Have any kind of health care
+coverage, including health insurance, prepaid plans such as HMO, etc.?
+Response: 0 = no 1 = yes
+
+```{r}
+data$any_healthcare <- factor(data$any_healthcare, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$any_healthcare)
+```
+
+Variable Name: no_docbc_cost Question:Was there a time in the past 12
+months when you needed to see a doctor but could not because of cost?
+Response: 0 = no 1 = yes
+
+```{r}
+data$no_docbc_cost <- factor(data$no_docbc_cost, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$no_docbc_cost)
+```
+
+Variable Name: diff_walk Question:Do you have serious difficulty walking
+or climbing stairs? Response: 0 = no 1 = yes
+
+```{r}
+data$diff_walk <- factor(data$diff_walk, levels = c(0, 1), labels = c("No", "Yes"))
+table(data$diff_walk)
+```
+
+Variable Name: sex Question:Are you Male or Female? Response: 0 = Female
+1 = Male
+
+```{r}
+data$sex <- factor(data$sex, levels = c(0, 1), labels = c("Female", "Male"))
+table(data$sex)
+```
+
+#Verification of Missing Variables
+
+```{r}
+# Check for missing values
+# Option 1: Check summary of missing values
+summary(is.na(data))
+```
+
+```{r}
+# Option 2: Count missing values per column
+colSums(is.na(data))
+```
+
+```{r}
+skimr::skim(data)
+```
+
+```{r}
+# Handle missing values: Example strategies
+
+# The provided code snippets are crucial for managing missing variables in a dataset. Strategies include imputing missing values with the median, removing missing rows for faster analyses, and filtering columns based on missing data thresholds to ensure data integrity and interpretability.These steps would be taken if a missing variable was encountered in the dataset. Thus far, there are no missing variables in the dataset. 
+
+# 1. Impute missing values (replace with mean or median)
+# Example: Impute numeric columns with median
+data_imputed <- data %>%
+  mutate_if(is.numeric, ~if_else(is.na(.), median(., na.rm = TRUE), .))
+
+# 2. Remove rows with any missing values
+data_complete <- na.omit(data) 
+#### Note: You have atleast one NA in every row so it is removing everything here
+
+# 3. Remove columns with more than a certain threshold of missing values (e.g., 50%)
+data_filtered <- data %>%
+  select(which(colMeans(!is.na(.)) > 0.5))
+```
+
+#Save file
+
+```{r}
+## I saved it as an RDS file so it retains all the formatting when you load it in the next time
+saveRDS(data, here("data/cleaned_data/cleaned_data_basic.RDS"))
+```
+
+```{r}
+# Save cleaned data as CSV
+write.csv(data, file = here("data/cleaned_data/cleaned_data_basic.csv"), row.names = FALSE)
+```
+
+#Summary Statistics
+```{r}
+# Load required libraries
+library(tidyverse)
+library(here)
+library(gtsummary)
+
+# Here i am
+here::i_am("code/summarystats.R")
+
+# Read in cleaned data
+data <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS"))
+
+# Recode diabetes_binary to be 0 = No diabetes, and 1 = Prediabetes
+data <- data %>%
+  mutate(diabetes_binary = factor(ifelse(diabetes_binary == "No diabetes", "No Diabetes", "Prediabetes")))
+
+# Categorize BMI
+data <- data %>%
+  mutate(bmi_category = case_when(
+    bmi < 18.5 ~ "Underweight",
+    bmi >= 18.5 & bmi < 24.9 ~ "Normal weight",
+    bmi >= 25 & bmi < 29.9 ~ "Overweight",
+    bmi >= 30 ~ "Obese"
+  ))
+```
+
+```{r}
+#works well
+# Assuming 'data' contains the specified column names
+library(dplyr)
+library(gtsummary)
+
+# Assuming 'data' is your data frame containing the relevant variables
+
+table1 <- data %>%
+  select(-bmi) %>%
+  tbl_summary(
+    by = diabetes_binary,
+    label = list(
+      # Demographics
+      sex = "Sex",
+      age = "Age",
+      # Socioeconomic
+      education = "Education",
+      income = "Income",
+      # Lifestyle
+      smoker = "Smoker",
+      phys_activity = "Physical Activity",
+      fruits = "Fruits Consumption",
+      veggies = "Vegetables Consumption",
+      hvy_alcohol_consump = "Heavy Alcohol Consumption",
+      # Health
+      gen_hlth = "General Health",
+      bmi_category = "BMI Category",
+      high_bp = "High Blood Pressure",
+      high_chol = "High Cholesterol",
+      chol_check = "Cholesterol Check",
+      diff_walk = "Difficulty Walking",
+      stroke = "Stroke",
+      heart_diseaseor_attack = "Heart Disease or Attack",
+      any_healthcare = "Any Healthcare",
+      no_docbc_cost = "No Doctor Because of Cost",
+      diabetes_binary = "Diabetes Status"
+    ),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})", 
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    missing = "no"
+  ) %>%
+  modify_header(label = "**Variable**") %>%
+  bold_labels() %>%
+  add_overall()
+  # add_p(test = everything() ~ chisq.test)
+
+
+# Print the table
+table1
+```
+
+
+##Chi Squared Test 
+```{r}
+library(dplyr)
+library(gtsummary)
+
+# Assuming 'data' is your data frame containing the relevant variables
+
+# Create a tbl_summary object
+table1 <- data %>%
+  select(-bmi) %>%
+  tbl_summary(
+    by = diabetes_binary,
+    label = list(
+      # Demographics
+      sex = "Sex",
+      age = "Age",
+      # Socioeconomic
+      education = "Education",
+      income = "Income",
+      # Lifestyle
+      smoker = "Smoker",
+      phys_activity = "Physical Activity",
+      fruits = "Fruits Consumption",
+      veggies = "Vegetables Consumption",
+      hvy_alcohol_consump = "Heavy Alcohol Consumption",
+      # Health
+      gen_hlth = "General Health",
+      bmi_category = "BMI Category",
+      high_bp = "High Blood Pressure",
+      high_chol = "High Cholesterol",
+      chol_check = "Cholesterol Check",
+      diff_walk = "Difficulty Walking",
+      stroke = "Stroke",
+      heart_diseaseor_attack = "Heart Disease or Attack",
+      any_healthcare = "Any Healthcare",
+      no_docbc_cost = "No Doctor Because of Cost",
+      diabetes_binary = "Diabetes Status"
+    ),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})", 
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    missing = "no"
+  ) %>%
+  modify_header(label = "**Variable**") %>%
+  bold_labels() %>%
+  add_overall()
+
+# Add p-values for categorical variables using chi-square tests
+table1 <- table1 %>%
+  add_p(test = all_categorical() ~ chisq.test)
+
+# Print the table
+table1
+```
+
+###Health Table
+```{r}
+library(dplyr)
+library(gtsummary)
+
+# Assuming 'data' is your dataframe containing the variables of interest
+
+table1 <- data %>%
+  select(
+    diabetes_binary, high_bp, high_chol, chol_check, bmi_category,
+    stroke, heart_diseaseor_attack, any_healthcare, no_docbc_cost, gen_hlth, diff_walk
+  ) %>%
+  tbl_summary(
+    by = diabetes_binary,
+    label = list(
+      gen_hlth = "General Health",
+      bmi_category = "BMI Category",
+      high_bp = "High Blood Pressure",
+      high_chol = "High Cholesterol",
+      chol_check = "Cholesterol Check",
+      diff_walk = "Difficulty Walking",
+      stroke = "Stroke",
+      heart_diseaseor_attack = "Heart Disease or Attack",
+      any_healthcare = "Any Healthcare",
+      no_docbc_cost = "No Doctor Because of Cost",
+      diabetes_binary = "Diabetes Status"
+    ),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})", 
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    missing = "no"
+  ) %>%
+  modify_header(label = "**Variable**") %>%
+  add_overall() %>%
+  bold_labels()
+table1
+```
+
+
+####Chi Sqaured in Health Table
+```{r}
+library(dplyr)
+library(gtsummary)
+
+# Assuming 'data' is your dataframe containing the variables of interest
+
+table1 <- data %>%
+  select(
+    diabetes_binary, high_bp, high_chol, chol_check, bmi_category,
+    stroke, heart_diseaseor_attack, any_healthcare, no_docbc_cost, gen_hlth, diff_walk
+  ) %>%
+  tbl_summary(
+    by = diabetes_binary,
+    label = list(
+      gen_hlth = "General Health",
+      bmi_category = "BMI Category",
+      high_bp = "High Blood Pressure",
+      high_chol = "High Cholesterol",
+      chol_check = "Cholesterol Check",
+      diff_walk = "Difficulty Walking",
+      stroke = "Stroke",
+      heart_diseaseor_attack = "Heart Disease or Attack",
+      any_healthcare = "Any Healthcare",
+      no_docbc_cost = "No Doctor Because of Cost",
+      diabetes_binary = "Diabetes Status"
+    ),
+    statistic = list(
+      all_continuous() ~ "{mean} ({sd})", 
+      all_categorical() ~ "{n} ({p}%)"
+    ),
+    missing = "no"
+  ) %>%
+  modify_header(label = "**Variable**") %>%
+  add_overall() %>%
+  bold_labels() %>%
+  add_p(test = everything() ~ chisq.test)  # Add chi-square tests for all categorical variables
+
+# Print the table
+table1
+```
+
+
+#Tree Model 
+
+## 1. Loading Libraries
+```{r load_libraries, message=FALSE, warning=FALSE}
+library(randomForest)  # For random forest modeling
+library(tidyverse)     # For data manipulation and visualization
+library(caret)         # For model training and evaluation
+library(doParallel)    # For parallel processing to speed up model training
+```
+
+## 2. Setting Up Parallel Processing
+```{r setup_parallel}
+set.seed(123)  # Ensure reproducibility of results
+
+# Create a cluster with the number of cores available minus one
+# cl <- makeCluster(detectCores() - 1)
+# # Register the cluster for parallel processing
+# registerDoParallel(cl)
+```
+
+## 3. Creating a Sample Dataset
+
+```{r create_dataset}
+data <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS"))
+
+rf_df <- data
+```
+
+## 4. Initial Model Training
+
+Now, let's train our initial Random Forest model:
+
+```{r initial_model}
+rf_model <- randomForest(
+  x = rf_df %>% select(-diabetes_binary),  # Predictors
+  y = rf_df$diabetes_binary,               # Response variable
+  importance = TRUE,                       # Calculate variable importance
+  ntree = 500                              # Number of trees
+)
+
+print(rf_model)
+```
+
+## 5. Parameter Tuning
+
+### 5.1 Tuning mtry
+
+The `mtry` parameter determines the number of variables randomly sampled as candidates at each split. Let's tune it:
+
+```{r tune_mtry}
+mtry_results <- tuneRF(
+  x = rf_df %>% select(-diabetes_binary),  # Predictors
+  y = rf_df$diabetes_binary,               # Response variable
+  ntreeTry = 500,                  # Number of trees to try
+  stepFactor = 1.5,                # Factor to increase mtry
+  improve = 0.01,                  # Minimum improvement to continue
+  trace = TRUE,                    # Print progress to console
+  plot = TRUE                      # Plot the results
+)
+
+best_mtry <- mtry_results %>% 
+  as.data.frame() %>%
+  filter(OOBError == min(OOBError)) %>% 
+  pull(mtry)
+
+cat("Best mtry:", best_mtry, "\n")
+```
+
+### 5.2 Finding Optimal Number of Trees
+
+We'll analyze the error rates to find the optimal number of trees:
+
+```{r optimal_trees}
+rf_model_large <- randomForest(
+  x = rf_df %>% select(-diabetes_binary),  # Predictors
+  y = rf_df$diabetes_binary,               # Response variable
+  importance = TRUE,               # Calculate variable importance
+  ntree = 5000,                    # Use a larger number of trees
+  mtry = best_mtry                 # Use the best mtry we found
+)
+
+rf_error_df <- data.frame(
+  OOB_ERROR = rf_model_large$err.rate[, "OOB"],  # OOB error rates
+  ITERATION = seq_len(rf_model_large$ntree)      # Corresponding iterations
+)
+
+ggplot(rf_error_df, aes(x = ITERATION, y = OOB_ERROR)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "OOB Error vs Number of Trees",
+       x = "Number of Trees",
+       y = "OOB Error")
+
+optimal_n_trees <- which.min(rf_error_df$OOB_ERROR)
+cat("Optimal number of trees:", optimal_n_trees, "\n")
+```
+
+## 6. Final Model Fitting
+
+Now, let's fit our final model with the tuned parameters:
+
+```{r final_model}
+rf_final_model <- randomForest(
+  x = rf_df %>% select(-diabetes_binary),  # Predictors
+  y = rf_df$diabetes_binary,               # Response variable
+  mtry = best_mtry,                # Optimal mtry value
+  importance = TRUE,               # Calculate variable importance
+  ntree = optimal_n_trees          # Optimal number of trees
+)
+
+print(rf_final_model)
+```
+
+## 7. Visualizing Feature Importance
+
+Finally, let's visualize the importance of each feature:
+
+```{r feature_importance}
+rf_features <- importance(rf_final_model) %>%
+  as.data.frame() %>%
+  mutate(feature = rownames(.)) %>%
+  arrange(desc(MeanDecreaseGini))
+
+# Show top features
+print(rf_features)
+
+# Plot feature importance
+rf_features %>%
+  ggplot(aes(x = MeanDecreaseGini, y = reorder(feature, MeanDecreaseGini))) + 
+  geom_point(color = "#2E86AB", size = 3) + 
+  geom_segment(aes(xend = 0, yend = feature), color = "#2E86AB") +
+  theme_minimal() +
+  labs(x = "Mean Decrease in Gini", y = "Feature", 
+       title = "Feature Importance in Random Forest Model")
+```
+
+## 8. Cleaning Up
+
+Don't forget to stop the parallel cluster after model training:
+
+```{r cleanup}
+stopCluster(cl)
+registerDoSEQ()  # Switch back to single-core processing
+```
+
+This concludes our Random Forest tutorial. You've learned how to create a dataset, train an initial model, tune parameters, fit a final model, and visualize feature importance using advanced techniques like parallel processing.
+
+## Notes for Continuous Outcomes
+
+If the outcome variable is continuous (regression problem), make the following adjustments:
+
+1. Change the outcome variable generation to be continuous:
+```{r}
+set.seed(8125)  # For reproducibility
+n <- 1000  # Number of observations
+p <- 5     # Number of predictors
+
+rf_df <- data.frame(matrix(rnorm(n * p), nrow = n, ncol = p))
+# colnames(rf_df) <- paste0("X", 1:p)
+rf_df$outcome <- rnorm(n)  # Generate a continuous outcome variable
+
+# Ensure there are no NA values
+rf_df <- na.omit(rf_df)
+```
+
+2. Adjust the Random Forest functions to regression mode:
+```{r}
+library(randomForest)
+library(tidyverse)
+
+# Initial model
+rf_model <- randomForest(
+  x = rf_df %>% select(-outcome),
+  y = rf_df$outcome,
+  importance = TRUE,
+  ntree = 500  # Start with fewer trees for quicker initial results
+)
+
+print(rf_model)
+
+# Tune mtry
+set.seed(8125)  # For reproducibility
+mtry_results <- tuneRF(
+  x = rf_df %>% select(-outcome),
+  y = rf_df$outcome,
+  ntreeTry = 500,
+  stepFactor = 1.5,
+  improve = 0.01,
+  trace = TRUE,
+  plot = TRUE
+)
+
+# Find best mtry
+best_mtry <- mtry_results[which.min(mtry_results[, "OOBError"]), "mtry"]
+cat("Best mtry:", best_mtry, "\n")
+
+# Train a larger model with the best mtry
+rf_model_large <- randomForest(
+  x = rf_df %>% select(-outcome),
+  y = rf_df$outcome,
+  mtry = best_mtry,
+  importance = TRUE,
+  ntree = 5000
+)
+
+# Find optimal number of trees
+rf_error_df <- data.frame(
+  MSE = rf_model_large$mse,
+  ITERATION = seq_along(rf_model_large$mse)
+)
+
+ggplot(rf_error_df, aes(x = ITERATION, y = MSE)) +
+  geom_line() +
+  theme_minimal() +
+  labs(title = "MSE vs Number of Trees",
+       x = "Number of Trees",
+       y = "Mean Squared Error")
+
+optimal_n_trees <- which.min(rf_error_df$MSE)
+cat("Optimal number of trees:", optimal_n_trees, "\n")
+
+# Final model with optimal parameters
+rf_final_model <- randomForest(
+  x = rf_df %>% select(-outcome),
+  y = rf_df$outcome,
+  mtry = best_mtry,
+  importance = TRUE,
+  ntree = optimal_n_trees
+)
+
+print(rf_final_model)
+
+# Plot variable importance
+varImpPlot(rf_final_model, main = "Variable Importance")
+```
+
+Remember to interpret the results accordingly for regression problems.
+
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.

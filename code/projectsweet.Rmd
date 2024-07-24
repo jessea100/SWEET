@@ -590,44 +590,70 @@ table1
 #Tree Model 
 
 ## 1. Loading Libraries
+I start by removing all objects from the environment to ensure a clean workspace. Then, I load the necessary libraries for the analysis. This may help with memory management and avoid conflicts between packages. I will also increase the size of memory available to R to prevent memory-related errors.
+
+
 ```{r load_libraries, message=FALSE, warning=FALSE}
+# clear environment
+rm(list = ls())
+
+# Load libraries
 library(randomForest)  # For random forest modeling
 library(tidyverse)     # For data manipulation and visualization
 library(caret)         # For model training and evaluation
 library(doParallel)    # For parallel processing to speed up model training
+library(data.table)   # For efficient data manipulation (more memory efficient)
+library(ranger)        # For faster random forest implementation
+library(pbapply)       # For progress bars
+
+# Increase memory limit
+memory.limit(size = 18000)  # Increase memory limit to 18 GB
 ```
 
 ## 2. Setting Up Parallel Processing
+
+To speed up the model training process, we'll use parallel processing. This will allow us to train the model on multiple cores simultaneously.
 ```{r setup_parallel}
 set.seed(123)  # Ensure reproducibility of results
 
 # Create a cluster with the number of cores available minus one
-# cl <- makeCluster(detectCores() - 1)
-# # Register the cluster for parallel processing
-# registerDoParallel(cl)
+cl <- makeCluster(detectCores() - 1)
+# Register the cluster for parallel processing
+registerDoParallel(cl)
 ```
 
-## 3. Creating a Sample Dataset
+## 3. Loading your Dataset
+Here, I just directly saved it as `rf_df` because storing two copies in memory is unnecessary and a waste of resources.
 
 ```{r create_dataset}
-data <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS"))
 
-rf_df <- data
+
+# data <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS"))
+# rf_df <- data
+rf_df <- readRDS(here("data/cleaned_data/cleaned_data_basic.RDS"))
+
+rf_df <- as.data.table(rf_df)
+
+# Storing X and Y as vectors to speed it up Convert to data.table for faster processing
+
+
 ```
 
 ## 4. Initial Model Training
 
 Now, let's train our initial Random Forest model:
 
-```{r initial_model}
-rf_model <- randomForest(
-  x = rf_df %>% select(-diabetes_binary),  # Predictors
-  y = rf_df$diabetes_binary,               # Response variable
-  importance = TRUE,                       # Calculate variable importance
-  ntree = 500                              # Number of trees
-)
+Note: I commented this out because it takes a long time to run and may not be necessary for the project since we get to tuning immediately.
 
-print(rf_model)
+```{r initial_model}
+# rf_model <- randomForest(
+#   x = rf_df %>% select(-diabetes_binary),  # Predictors
+#   y = rf_df$diabetes_binary,               # Response variable
+#   importance = TRUE,                       # Calculate variable importance
+#   ntree = 500                              # Number of trees
+# )
+# 
+# print(rf_model)
 ```
 
 ## 5. Parameter Tuning
@@ -635,80 +661,143 @@ print(rf_model)
 ### 5.1 Tuning mtry
 
 The `mtry` parameter determines the number of variables randomly sampled as candidates at each split. Let's tune it:
-
+Note: I commented it out because we ran it a few times, and it was talking a long time to run, but the end value was always 3. 
 ```{r tune_mtry}
-mtry_results <- tuneRF(
-  x = rf_df %>% select(-diabetes_binary),  # Predictors
-  y = rf_df$diabetes_binary,               # Response variable
-  ntreeTry = 500,                  # Number of trees to try
-  stepFactor = 1.5,                # Factor to increase mtry
-  improve = 0.01,                  # Minimum improvement to continue
-  trace = TRUE,                    # Print progress to console
-  plot = TRUE                      # Plot the results
-)
+# mtry_results <- tuneRF(
+#   x = rf_df %>% select(-diabetes_binary),  # Predictors
+#   y = rf_df$diabetes_binary,               # Response variable
+#   ntreeTry = 500,                  # Number of trees to try
+#   stepFactor = 1.5,                # Factor to increase mtry
+#   improve = 0.01,                  # Minimum improvement to continue
+#   trace = TRUE,                    # Print progress to console
+#   plot = TRUE                      # Plot the results
+# )
+# 
+# best_mtry <- mtry_results %>% 
+#   as.data.frame() %>%
+#   filter(OOBError == min(OOBError)) %>% 
+#   pull(mtry)
+# 
+# cat("Best mtry:", best_mtry, "\n")
 
-best_mtry <- mtry_results %>% 
-  as.data.frame() %>%
-  filter(OOBError == min(OOBError)) %>% 
-  pull(mtry)
-
-cat("Best mtry:", best_mtry, "\n")
 ```
 
 ### 5.2 Finding Optimal Number of Trees
 
 We'll analyze the error rates to find the optimal number of trees:
 
-```{r optimal_trees}
-rf_model_large <- randomForest(
-  x = rf_df %>% select(-diabetes_binary),  # Predictors
-  y = rf_df$diabetes_binary,               # Response variable
-  importance = TRUE,               # Calculate variable importance
-  ntree = 5000,                    # Use a larger number of trees
-  mtry = best_mtry                 # Use the best mtry we found
-)
 
-rf_error_df <- data.frame(
-  OOB_ERROR = rf_model_large$err.rate[, "OOB"],  # OOB error rates
-  ITERATION = seq_len(rf_model_large$ntree)      # Corresponding iterations
-)
-
-ggplot(rf_error_df, aes(x = ITERATION, y = OOB_ERROR)) +
-  geom_line() +
-  theme_minimal() +
-  labs(title = "OOB Error vs Number of Trees",
-       x = "Number of Trees",
-       y = "OOB Error")
-
-optimal_n_trees <- which.min(rf_error_df$OOB_ERROR)
-cat("Optimal number of trees:", optimal_n_trees, "\n")
+```{r}
+# # Train the random forest model using ranger with OOB error tracking
+# rf_model_large <- ranger(
+#   formula = diabetes_binary ~ .,       # Response variable
+#   data = rf_df,                        # Data frame
+#   num.trees = 5000,                    # Use a larger number of trees
+#   mtry = best_mtry,                    # Use the best mtry we found
+#   importance = 'none',                 # Do not calculate variable importance
+#   keep.inbag = TRUE,                   # Keep the in-bag samples
+#   oob.error = TRUE                       # Print progress every 100 trees
+# )
+# 
+# # Function to calculate OOB error for each tree with progress bar
+# calculate_oob_error <- function(model, data, target_var) {
+#   oob_errors <- numeric(model$num.trees)
+#   
+#   pb <- startpb(0, model$num.trees)
+#   on.exit(closepb(pb))
+#   
+#   for (i in seq_len(model$num.trees)) {
+#     inbag <- model$inbag.counts[[i]]  # Access the in-bag counts for the i-th tree
+#     
+#     preds <- predict(model, data = data, num.trees = i, type = "response")
+#     oob_preds <- preds$predictions[inbag == 0]
+#     oob_truth <- target_var[inbag == 0]
+#     
+#     oob_errors[i] <- mean(oob_preds != oob_truth)
+#     
+#     setpb(pb, i)
+#   }
+#   
+#   return(oob_errors)
+# }
+# 
+# # Calculate OOB errors with progress tracking
+# oob_errors <- calculate_oob_error(rf_model_large, rf_df, rf_df$diabetes_binary)
+# 
+# # Create the error data frame
+# rf_error_df <- data.frame(
+#   OOB_ERROR = oob_errors,               # OOB error rates
+#   ITERATION = seq_len(length(oob_errors))  # Corresponding iterations
+# )
+# 
+# # Plot OOB Error vs Number of Trees
+# ggplot(rf_error_df, aes(x = ITERATION, y = OOB_ERROR)) +
+#   geom_line() +
+#   theme_minimal() +
+#   labs(title = "OOB Error vs Number of Trees",
+#        x = "Number of Trees",
+#        y = "OOB Error")
+# 
+# # Find the optimal number of trees
+# optimal_n_trees <- which.min(rf_error_df$OOB_ERROR)
+# cat("Optimal number of trees:", optimal_n_trees, "\n")
 ```
+
 
 ## 6. Final Model Fitting
 
 Now, let's fit our final model with the tuned parameters:
 
 ```{r final_model}
-rf_final_model <- randomForest(
-  x = rf_df %>% select(-diabetes_binary),  # Predictors
-  y = rf_df$diabetes_binary,               # Response variable
-  mtry = best_mtry,                # Optimal mtry value
-  importance = TRUE,               # Calculate variable importance
-  ntree = optimal_n_trees          # Optimal number of trees
-)
-
-print(rf_final_model)
+# # Optimal parameters
+# best_mtry <- 3 # Optimal mtry value sleected from tuning
+# optimal_n_trees <- 150 # Selected from the OOB error output- manually for now by Abhi
+# 
+# # Train the final random forest model using ranger with the optimal parameters
+# rf_final_model <- ranger(
+#   formula = diabetes_binary ~ .,       # Formula
+#   data = rf_df,                        # Data frame
+#   num.trees = optimal_n_trees,         # Optimal number of trees
+#   mtry = best_mtry,                    # Optimal mtry value
+#   importance = 'impurity',             # Calculate variable importance
+#   verbose = TRUE                       # Print progress to console
+# )
+# 
+# print(rf_final_model)
+# 
+# # save the model
+# saveRDS(rf_final_model, here("data/rf_final_model.RDS"))
 ```
+
 
 ## 7. Visualizing Feature Importance
 
 Finally, let's visualize the importance of each feature:
 
 ```{r feature_importance}
+# Load the final model
+rf_final_model <- readRDS(here("data/rf_final_model.RDS"))
+
+# Extract feature importance from the ranger model
 rf_features <- importance(rf_final_model) %>%
   as.data.frame() %>%
-  mutate(feature = rownames(.)) %>%
-  arrange(desc(MeanDecreaseGini))
+  rownames_to_column(var = "feature") %>%
+  rename(importance = ".") %>%
+  arrange(desc(importance))
+
+
+# Show top features
+print(rf_features)
+
+# Plot feature importance
+rf_features %>%
+  ggplot(aes(x = importance, y = reorder(feature, importance))) + 
+  geom_point(color = "#2E86AB", size = 3) + 
+  geom_segment(aes(xend = 0, yend = feature), color = "#2E86AB") +
+  theme_minimal() +
+  labs(x = "Mean Decrease in Gini", y = "Feature", 
+       title = "Feature Importance in Random Forest Model")
+
 
 # Show top features
 print(rf_features)
